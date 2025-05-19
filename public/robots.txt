@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dkmbedobe.onrender.com/sitemap.xml
