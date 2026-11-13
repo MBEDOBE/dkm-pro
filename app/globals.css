@@ -1,47 +1,41 @@
 @import "tailwindcss";
 
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Preserve the existing About and Contact page typography. */
 @layer base {
-  h1 {
-    @apply text-4xl font-bold text-gray-800 md:text-5xl;
-  }
-
-  h2 {
-    @apply text-2xl font-semibold text-gray-700 md:text-3xl;
-  }
-
-  p {
-    @apply text-base leading-relaxed text-gray-600;
-  }
+  h1 { @apply text-4xl font-bold text-slate-900 md:text-5xl; }
+  h2 { @apply text-2xl font-semibold text-slate-800 md:text-3xl; }
+  p { @apply text-base leading-relaxed text-slate-600; }
 }
 
-.swiper-pagination-bullet {
-  background-color: #f97316 !important; /* orange-600 */
-  opacity: 0.5 !important;
-  width: 10px !important;
-  height: 10px !important;
-  transition: all 0.3s ease !important;
+::selection {
+  background-color: #fed7aa;
+  color: #172033;
 }
 
-.swiper-pagination-bullet-active {
-  background-color: #fb923c !important; /* orange-400 */
-  opacity: 1 !important;
-  width: 14px !important;
-  height: 14px !important;
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @keyframes slide-in {
-  0% {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
-.animate-slide-in {
-  animation: slide-in 0.4s ease-out;
-}
+.animate-slide-in { animation: slide-in 0.4s ease-out; }

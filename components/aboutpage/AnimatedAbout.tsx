@@ -1,392 +1,384 @@
-"use client";
-import { useState } from "react";
-import { motion, Variants } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
 
-/* ----------‑‑‑  CONSTANTS & TYPES  ‑‑‑---------- */
+/** Keep previous experience and education details available without making
+ * visitors work through nested tabs or a scroll-trapped panel. */
+const experience = [
+  {
+    title: "Software Engineer",
+    subtitle: "Freelance | 2019 – Present",
+    description: "Built full-stack applications (MERN, PHP, C#), POS systems, and delivered maintenance support.",
+  },
+  {
+    title: "Field Enumerator",
+    subtitle: "Vision Fund | Mar 2021",
+    description: "Conducted household interviews; entered survey data using ODK.",
+  },
+  {
+    title: "Supervisor – Population & Housing Census",
+    subtitle: "Ghana Statistical Service | Jun–Jul 2021",
+    description: "Supervised census teams, performed quality checks.",
+  },
+  {
+    title: "Data Entry Clerk",
+    subtitle: "Electoral Commission Ghana | Mar–May 2012",
+    description: "Entered and verified voter registration data in Excel.",
+  },
+  {
+    title: "Field Enumerator",
+    subtitle: "World Vision Ghana – Saboba AP | Aug 2018",
+    description: "Community-level interviews for development assessments.",
+  },
+  {
+    title: "Data Entry Clerk",
+    subtitle: "World Vision Ghana – Saboba AP | May 2015 & Aug 2016",
+    description: "Processed evaluation survey data; ensured validation.",
+  },
+];
 
-const tabs = [
-  "Skill",
-  "Experience",
-  "Education",
-  "Other",
-  "Languages",
-] as const;
-const skillSubTabs = ["Web Development", "Data Handling & Analysis"] as const;
+const education = [
+  {
+    title: "ALX | Certified Software Engineer",
+    subtitle: "2022 – 2023",
+    description: "Intensive full-stack and systems program.",
+  },
+  {
+    title: "Udacity | Data Analyst Nanodegree",
+    subtitle: "2022",
+    description: "Data wrangling, EDA, statistics with Python and SQL.",
+  },
+  {
+    title: "Udacity | React Nanodegree",
+    subtitle: "Nov 2021",
+    description: "Advanced React application architecture and testing.",
+  },
+  {
+    title: "Coursera | Google Project Management",
+    subtitle: "Sep 2021",
+    description: "Agile, stakeholder, and project planning.",
+  },
+  {
+    title: "Coursera | Google UX Design",
+    subtitle: "Jul 2021",
+    description: "User-centred design, prototyping, and testing.",
+  },
+  {
+    title: "Coursera | Google IT Support",
+    subtitle: "May 2021",
+    description: "Networking, operating systems, and sysadmin fundamentals.",
+  },
+];
 
-type Tab = (typeof tabs)[number];
-type SkillSubTab = (typeof skillSubTabs)[number];
+const skillGroups = [
+  {
+    heading: "Websites & interfaces",
+    description: "The tools I use for responsive pages, frontend features, and website improvements.",
+    skills: ["HTML", "CSS", "JavaScript", "TypeScript", "React", "Next.js", "Tailwind CSS", "Bootstrap", "Sass", "WordPress"],
+  },
+  {
+    heading: "Application & data experience",
+    description: "Technologies I also use when working on my own business applications or more technical projects.",
+    skills: ["MongoDB", "Node.js", "Express", "SQL"],
+  },
+  {
+    heading: "Additional experience",
+    description: "Other capabilities from previous professional and technical work.",
+    skills: ["Python", "Pandas", "NumPy", "Data analysis", "Data entry", "Web scraping", "Seaborn", "Beautiful Soup", "Selenium", "Scrapy"],
+  },
+];
 
-interface Skill {
-  title: string;
-  description: string;
-  subtitle?: string;
-}
+const projectTypes = [
+  {
+    number: "01",
+    title: "Small business websites",
+    description: "Clear, responsive pages that explain a service, build trust, and make it easy to get in touch.",
+  },
+  {
+    number: "02",
+    title: "Landing pages",
+    description: "Focused single-page experiences for an idea, organization, campaign, or offering.",
+  },
+  {
+    number: "03",
+    title: "Website fixes & redesigns",
+    description: "Mobile layout improvements, visual updates, and smaller React or Next.js interface tasks.",
+  },
+];
 
-interface SkillCategory {
-  category: SkillSubTab;
-  skills: Skill[];
-}
-
-interface TimelineItem {
-  title: string;
-  subtitle?: string;
-  description: string;
-}
-
-interface SimpleItem {
-  title: string;
-  description: string;
-}
-
-interface TabContent {
-  Skill: SkillCategory[];
-  Experience: TimelineItem[];
-  Education: TimelineItem[];
-  Other: SimpleItem[];
-  Languages: SimpleItem[];
-}
-
-/* ----------‑‑‑  DATA  ‑‑‑---------- */
-
-const tabContent: TabContent = {
-  Skill: [
-    {
-      category: "Web Development",
-      skills: [
-        {
-          title: "React Js",
-          description: "Building modern and responsive frontend applications.",
-        },
-        {
-          title: "MERN Stack",
-          description:
-            "Developing full‑stack web apps using MongoDB, Express, React, and Node.js.",
-        },
-        {
-          title: "Tailwind CSS, Bootstrap",
-          description: "Rapid UI styling with utility‑first CSS.",
-        },
-        {
-          title: "HTML5 / CSS3 / Sass",
-          description: "Crafting clean and accessible web pages.",
-        },
-        {
-          title: "JavaScript / TypeScript",
-          description: "Dynamic and type‑safe client‑side logic.",
-        },
-        {
-          title: "CMS (WordPress)",
-          description: "Building and managing content‑heavy websites.",
-        },
-      ],
-    },
-    {
-      category: "Data Handling & Analysis",
-      skills: [
-        {
-          title: "Data Analysis",
-          description:
-            "Analyzing and visualizing data with Python (Pandas, NumPy, Seaborn).",
-        },
-        {
-          title: "Data Entry",
-          description:
-            "Accurate, fast entry and processing of large datasets (80+ WPM).",
-        },
-        {
-          title: "Data Scraping",
-          description:
-            "Extracting data via Python (Beautiful Soup, Selenium, Scrapy).",
-        },
-      ],
-    },
-  ],
-  Experience: [
-    {
-      title: "Software Engineer",
-      subtitle: "Freelance | 2019 – Present",
-      description:
-        "Built full‑stack applications (MERN, PHP, C#), POS systems, and delivered maintenance support.",
-    },
-    {
-      title: "Field Enumerator",
-      subtitle: "Vision Fund | Mar 2021",
-      description:
-        "Conducted household interviews; entered survey data using ODK.",
-    },
-    {
-      title: "Supervisor – Population & Housing Census",
-      subtitle: "Ghana Statistical Service | Jun–Jul 2021",
-      description: "Supervised census teams, performed quality checks.",
-    },
-    {
-      title: "Data Entry Clerk",
-      subtitle: "Electoral Commission Ghana | Mar–May 2012",
-      description: "Entered & verified voter registration data in Excel.",
-    },
-    {
-      title: "Field Enumerator",
-      subtitle: "World Vision Ghana – Saboba AP | Aug 2018",
-      description: "Community‑level interviews for development assessments.",
-    },
-    {
-      title: "Data Entry Clerk",
-      subtitle: "World Vision Ghana – Saboba AP | May 2015 & Aug 2016",
-      description: "Processed evaluation survey data; ensured validation.",
-    },
-  ],
-  Education: [
-    {
-      title: "ALX | Certified Software Engineer",
-      subtitle: "2022 – 2023",
-      description: "Intensive full‑stack & systems program.",
-    },
-    {
-      title: "Udacity | Data Analyst Nanodegree",
-      subtitle: "2022",
-      description: "Data wrangling, EDA, stats with Python & SQL.",
-    },
-    {
-      title: "Udacity | React Nanodegree",
-      subtitle: "Nov 2021",
-      description: "Advanced React app architecture & testing.",
-    },
-    {
-      title: "Coursera | Google Project Management",
-      subtitle: "Sep 2021",
-      description: "Agile, stakeholder & project planning.",
-    },
-    {
-      title: "Coursera | Google UX Design",
-      subtitle: "Jul 2021",
-      description: "User‑centred design, prototyping, testing.",
-    },
-    {
-      title: "Coursera | Google IT Support",
-      subtitle: "May 2021",
-      description: "Networking, OS, sysadmin fundamentals.",
-    },
-  ],
-  Languages: [
-    { title: "Likpakpaanl", description: "Native" },
-    { title: "English", description: "Fluent" },
-    { title: "French", description: "Fluent" },
-  ],
-  Other: [
-    {
-      title: "Attention to Detail",
-      description: "Accuracy in data entry and QA tasks.",
-    },
-    {
-      title: "Organizational Skills",
-      description: "Manage multiple projects & deadlines.",
-    },
-    {
-      title: "Communication",
-      description: "Present technical ideas to non‑technical audiences.",
-    },
-  ],
-};
-
-/* ----------‑‑‑  ANIMATION PRESET  ‑‑‑---------- */
-
-const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.2, duration: 0.6 },
-  }),
-};
-
-const AnimatedAbout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("Skill");
-  const [activeSkillTab, setActiveSkillTab] =
-    useState<SkillSubTab>("Web Development");
-
-  const currentSkills =
-    tabContent.Skill.find((cat) => cat.category === activeSkillTab)?.skills ??
-    [];
+function BackgroundList({
+  items,
+}: {
+  items: { title: string; subtitle: string; description: string }[];
+}) {
   return (
-    <section
-      id="about"
-      aria-labelledby="about-heading"
-      className="flex flex-col lg:flex-row items-center justify-between gap-10 px-6 py-12 pt-28 lg:-pt-28 w-full max-w-screen-xl min-h-screen mx-auto"
-    >
-      {/* ----------  Left: Bio  ---------- */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeInUp}
-        className="space-y-6 lg:w-1/2"
+    <ol className="mt-6 grid gap-4 sm:grid-cols-2">
+      {items.map((item) => (
+        <li key={`${item.title}-${item.subtitle}`} className="rounded-xl border border-slate-200 bg-white p-5">
+          <h4 className="text-base font-semibold text-slate-900">{item.title}</h4>
+          <p className="mt-1 text-xs font-medium text-orange-700">{item.subtitle}</p>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export default function AnimatedAbout() {
+  return (
+    <>
+      <section
+        aria-labelledby="about-heading"
+        className="relative overflow-hidden bg-[#f8fafc]"
       >
-        <header>
-          <h2 id="about-heading" className="sr-only">
-            About Daniel Mbedobe
-          </h2>
-          <h1 className="">
-            <span className="text-gray-600">Daniel Mbedobe</span>
-            <span className="text-orange-500"> Kunji.</span>
-          </h1>
-          <p className="italic">
-            Your vision, my expertise – together, we create magic.
-          </p>
-        </header>
-
-        <p className="text-justify">
-          Hi, I&apos;m D. Mbedobe Kunji, a results‑oriented web developer and
-          data specialist with over a decade of experience. I build responsive
-          web apps with React, JavaScript, and Tailwind CSS, plus provide
-          precise data entry and scraping services. Let&apos;s discuss how my
-          skills can benefit your projects.
-        </p>
-
-        {/* Stats */}
-        <section aria-label="Professional statistics">
-          <dl className="flex flex-wrap gap-8 pt-4 text-center">
-            {[
-              ["10+", "Years Experience"],
-              ["10+", "Satisfied Clients"],
-              ["13+", "Projects Done"],
-            ].map(([num, label], i) => (
-              <motion.div key={label} custom={i} variants={fadeInUp}>
-                <dt className="text-3xl font-bold text-orange-500">{num}</dt>
-                <dd className="text-sm text-gray-400">{label}</dd>
-              </motion.div>
-            ))}
-          </dl>
-        </section>
-      </motion.div>
-
-      {/* ----------  Right: Tabs  ---------- */}
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full space-y-6 lg:w-1/2"
-      >
-        {/* Top-level tabs */}
-        <nav aria-label="About section tabs">
-          <div className="flex flex-wrap gap-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                className={`px-4 py-2 text-sm font-semibold rounded ${
-                  activeTab === tab
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-800 text-gray-300"
-                }`}
-                onClick={() => setActiveTab(tab)}
-                aria-pressed={activeTab === tab}
+        <div
+          className="pointer-events-none absolute -right-20 top-0 h-72 w-72 rounded-full bg-orange-100/60 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 pt-8 pb-16 sm:px-8 sm:pt-10 sm:pb-20 lg:grid-cols-[1.3fr_0.7fr] lg:px-10 lg:pt-12 lg:pb-24">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-700">
+              About me
+            </p>
+            <h1
+              id="about-heading"
+              className="mt-4 text-[clamp(2.5rem,5vw,4.25rem)] font-semibold leading-[1.12] tracking-[-0.04em] text-slate-900"
+            >
+              Hi, I&apos;m Daniel.{" "}
+              <span className="text-orange-600">
+                I build websites that are easy to use.
+              </span>
+            </h1>
+            <p className="mt-7 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+              I&apos;m a web developer with experience creating websites and
+              applications for schools, organizations, and businesses. I enjoy
+              working on practical digital experiences that are clear,
+              responsive, and straightforward to maintain.
+            </p>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
+              For freelance work, I focus on well-defined website projects and
+              smaller interface improvements. My wider technical background
+              includes React, Next.js, and MongoDB, which I also use in my own
+              business projects.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/portfolio"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg bg-orange-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700"
               >
-                {tab}
-              </button>
+                See my work{" "}
+                <span className="ml-2" aria-hidden="true">
+                  ↗
+                </span>
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex min-h-12 items-center justify-center rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-orange-400 hover:text-orange-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700"
+              >
+                Discuss a project
+              </Link>
+            </div>
+          </div>
+          <div className="mx-auto w-full max-w-[360px] lg:max-w-none">
+            <div className="relative aspect-[422/525] overflow-hidden rounded-[28px] border border-orange-100 bg-[#edf3e8] shadow-[0_25px_65px_-35px_rgba(15,23,42,0.35)]">
+              <Image
+                src="/assets/pp.webp"
+                alt="Portrait of Daniel Mbedobe"
+                fill
+                sizes="(max-width: 1024px) 360px, 32vw"
+                className="object-cover object-top"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        aria-labelledby="focus-title"
+        className="bg-white py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-700">
+              Good projects to collaborate on
+            </p>
+            <h2
+              id="focus-title"
+              className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl"
+            >
+              Focused work, thoughtfully delivered.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              I especially enjoy projects with a clear goal, manageable scope,
+              and useful result.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {projectTypes.map((type) => (
+              <article
+                key={type.number}
+                className="rounded-2xl border border-slate-200 bg-[#f8fafc] p-7"
+              >
+                <p className="text-sm font-semibold text-orange-700">
+                  {type.number} /
+                </p>
+                <h3 className="mt-6 text-xl font-semibold text-slate-900">
+                  {type.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {type.description}
+                </p>
+              </article>
             ))}
           </div>
-        </nav>
+        </div>
+      </section>
 
-        {/* Sub‑tabs for Skill */}
-        {activeTab === "Skill" && (
-          <nav aria-label="Skill sub-section tabs" className="mt-4">
-            <div className="flex flex-wrap gap-2">
-              {skillSubTabs.map((sub) => (
-                <button
-                  key={sub}
-                  className={`px-3 py-1 text-xs font-semibold rounded ${
-                    activeSkillTab === sub
-                      ? "bg-orange-400 text-white"
-                      : "bg-gray-700 text-gray-300"
-                  }`}
-                  onClick={() => setActiveSkillTab(sub)}
-                  aria-pressed={activeSkillTab === sub}
+      <section
+        aria-labelledby="skills-title"
+        className="bg-[#f4f6f9] py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-700">
+              Technical background
+            </p>
+            <h2
+              id="skills-title"
+              className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl"
+            >
+              Tools and technologies I work with.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              My skills cover both the websites I build for clients and the more
+              technical applications I develop independently.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {skillGroups.map((group) => (
+              <article
+                key={group.heading}
+                className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
+              >
+                <h3 className="text-lg font-semibold text-slate-900">
+                  {group.heading}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {group.description}
+                </p>
+                <ul
+                  className="mt-6 flex flex-wrap gap-2"
+                  aria-label={`${group.heading} skills`}
                 >
-                  {sub}
-                </button>
-              ))}
-            </div>
-          </nav>
-        )}
-
-        {/* Tab content */}
-        <motion.div
-          key={activeTab === "Skill" ? activeSkillTab : activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          role="tabpanel"
-          aria-live="polite"
-          className="grid sm:grid-cols-2 gap-6 max-h-[400px] overflow-y-auto pr-2 mt-4"
-        >
-          {/* ---- Skill ---- */}
-          {activeTab === "Skill" &&
-            currentSkills.map(({ title, description, subtitle }) => (
-              <motion.div
-                key={title}
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUp}
-                className="p-4 bg-gray-900 border-l-4 border-orange-500 rounded"
-              >
-                <h3 className="font-semibold text-white">{title}</h3>
-                <p className="text-sm text-gray-400">{description}</p>
-                {subtitle && (
-                  <p className="text-xs italic text-gray-500">{subtitle}</p>
-                )}
-              </motion.div>
+                  {group.skills.map((skill) => (
+                    <li
+                      key={skill}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700"
+                    >
+                      {skill}
+                    </li>
+                  ))}
+                </ul>
+              </article>
             ))}
+          </div>
+        </div>
+      </section>
 
-          {/* ---- Timeline‑style tabs ---- */}
-          {(activeTab === "Experience" || activeTab === "Education") &&
-            (tabContent[activeTab] as TimelineItem[]).map(
-              ({ title, subtitle, description }) => (
-                <motion.div
-                  key={title}
-                  initial="hidden"
-                  animate="visible"
-                  variants={fadeInUp}
-                  className="p-4 bg-gray-900 border-l-4 border-orange-500 rounded"
-                >
-                  <h3 className="font-semibold text-white">{title}</h3>
-                  {subtitle && (
-                    <p className="text-xs italic text-gray-400">{subtitle}</p>
-                  )}
-                  <p className="text-sm text-gray-400">{description}</p>
-                </motion.div>
-              )
-            )}
+      <section
+        aria-labelledby="background-title"
+        className="bg-white py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-700">
+              Experience and learning
+            </p>
+            <h2
+              id="background-title"
+              className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl"
+            >
+              The experience behind my work.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              My background combines software development, technical learning,
+              and work that values accuracy, organization, and communication.
+            </p>
+          </div>
+          <div className="mt-10 space-y-4">
+            <details
+              open
+              className="group rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 sm:p-7"
+            >
+              <summary className="cursor-pointer list-item rounded-sm text-lg font-semibold text-slate-900 marker:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700">
+                Professional experience
+              </summary>
+              <BackgroundList items={experience} />
+            </details>
+            <details className="group rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 sm:p-7">
+              <summary className="cursor-pointer list-item rounded-sm text-lg font-semibold text-slate-900 marker:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700">
+                Education and training
+              </summary>
+              <BackgroundList items={education} />
+            </details>
+            <details className="group rounded-2xl border border-slate-200 bg-[#f8fafc] p-5 sm:p-7">
+              <summary className="cursor-pointer list-item rounded-sm text-lg font-semibold text-slate-900 marker:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700">
+                Languages and other strengths
+              </summary>
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold text-slate-900">Languages</h3>
+                  <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
+                    <li>Likpakpaanl — Native</li>
+                    <li>English — Fluent</li>
+                    <li>French — Fluent</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">
+                    Other strengths
+                  </h3>
+                  <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
+                    <li>Attention to detail and quality checks</li>
+                    <li>Organization and deadline management</li>
+                    <li>Communicating technical ideas clearly</li>
+                  </ul>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
 
-          {/* ---- Other simple lists ---- */}
-          {activeTab === "Languages" &&
-            tabContent.Languages.map(({ title, description }) => (
-              <motion.div
-                key={title}
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUp}
-                className="p-4 bg-gray-900 border-l-4 border-orange-500 rounded"
-              >
-                <h3 className="font-semibold text-white">{title}</h3>
-                <p className="text-sm text-gray-400">{description}</p>
-              </motion.div>
-            ))}
-
-          {activeTab === "Other" &&
-            tabContent.Other.map(({ title, description }) => (
-              <motion.div
-                key={title}
-                initial="hidden"
-                animate="visible"
-                variants={fadeInUp}
-                className="p-4 bg-gray-900 border-l-4 border-orange-500 rounded"
-              >
-                <h3 className="font-semibold text-white">{title}</h3>
-                <p className="text-sm text-gray-400">{description}</p>
-              </motion.div>
-            ))}
-        </motion.div>
-      </motion.div>
-    </section>
+      <section
+        aria-labelledby="about-contact-title"
+        className="bg-[#172033] py-16 sm:py-20"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between lg:px-10">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-300">
+              Work together
+            </p>
+            <h2
+              id="about-contact-title"
+              className="mt-3 text-3xl font-semibold text-white sm:text-4xl"
+            >
+              Have a small website project in mind?
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-300">
+              Share what you need and we can explore a clear, practical scope.
+            </p>
+          </div>
+          <Link
+            href="/contact"
+            className="inline-flex min-h-12 w-fit shrink-0 items-center rounded-lg bg-orange-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-500 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+          >
+            Get in touch{" "}
+            <span className="ml-2" aria-hidden="true">
+              ↗
+            </span>
+          </Link>
+        </div>
+      </section>
+    </>
   );
-};
-
-export default AnimatedAbout;
+}

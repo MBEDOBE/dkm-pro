@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { motion } from "framer-motion";
+import Link from "next/link";
+import Script from "next/script";
+import { useRef,useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 
 type FormInputs = {
   fullName: string;
@@ -10,323 +11,398 @@ type FormInputs = {
   email: string;
   subject: string;
   message: string;
-  honeypot?: string;
+  botcheck?: boolean;
 };
 
-const ContactContent = () => {
+const fieldClass =
+  "mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus-visible:border-orange-600 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-orange-600";
+const labelClass = "block text-sm font-semibold text-slate-800";
+
+// Web3Forms supports browser-side submissions from a static Next.js export.
+// This is a public form access key, not a secret server API token.
+const web3FormsAccessKey = process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY;
+
+export default function ContactContent() {
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormInputs>();
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [submitted, setSubmitted] = useState<boolean>(false);
-  const [sending, setSending] = useState<boolean>(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [captchaError, setCaptchaError] = useState("");
 
   const onSubmit: SubmitHandler<FormInputs> = async (data) => {
-    if (data.honeypot) {
-      console.warn("🤖 Spam bot detected.");
+    // The hidden checkbox is a simple extra spam check supported by Web3Forms.
+    if (data.botcheck) return;
+    setStatus("idle");
+    setErrorMessage("");
+
+    if (!web3FormsAccessKey) {
+      setErrorMessage("The contact form is not configured yet. Please try again later.");
+      setStatus("error");
       return;
     }
 
-    setSending(true);
-    try {
-      const response = await fetch("https://formspree.io/f/xkgjabwg", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          fullName: data.fullName,
-          phone: data.phone,
-          email: data.email,
-          subject: data.subject,
-          message: data.message,
-        }),
-      });
+    const captchaToken = formRef.current?.querySelector<HTMLTextAreaElement>(
+      'textarea[name="h-captcha-response"]',
+    )?.value;
 
-      if (response.ok) {
-        setSubmitted(true);
-        reset();
-      } else {
-        alert("🚨 Something went wrong. Please try again.");
+    if (!captchaToken) {
+      setCaptchaError("Please confirm you're human before sending.");
+      return;
+    }
+
+    setCaptchaError("");
+
+    try {
+      const payload = new FormData();
+      payload.append("access_key", web3FormsAccessKey);
+      payload.append("h-captcha-response", captchaToken);
+      payload.append("name", data.fullName.trim());
+      payload.append("email", data.email.trim());
+      payload.append("subject", data.subject.trim());
+      payload.append("message", data.message.trim());
+      if (data.phone?.trim()) payload.append("phone", data.phone.trim());
+
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body: payload,
+      });
+      const result: { success?: boolean; message?: string } =
+        await response.json();
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || "Submission was not accepted.");
       }
+
+      reset();
+      setStatus("success");
     } catch (error) {
-      console.error("Error:", error);
-      alert("⚠️ Network error. Please try again later.");
+      // Don't include entered contact details in logs or the error shown to visitors.
+      console.error("Contact form submission failed", error);
+      setErrorMessage(
+        "Your message could not be sent. Please try again shortly.",
+      );
+      setStatus("error");
     } finally {
-      setSending(false);
+      const captchaWindow = window as Window & {
+        hcaptcha?: { reset: () => void };
+      };
+
+      captchaWindow.hcaptcha?.reset();
     }
   };
 
-  useEffect(() => {
-    if (submitted) {
-      const timer = setTimeout(() => setSubmitted(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [submitted]);
   return (
-    <section className="flex flex-col items-center justify-between w-full max-w-screen-xl min-h-screen gap-10 pb-10 pr-2 mx-auto text-white lg:flex-row pt-28 lg:pt-0">
-      {submitted && (
-        <div className="fixed z-50 top-6 right-6 animate-slide-in">
-          <div className="flex items-start w-[90%] max-w-md gap-4 p-4 bg-white border-l-4 border-green-600 rounded-lg shadow-xl">
-            <div className="mt-1 text-green-600">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-green-700">
-                Message sent successfully!
-              </h3>
-              <p className="mt-1 text-sm text-gray-600">
-                We&apos;ll be in touch soon.
-              </p>
-            </div>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="text-gray-400 transition hover:text-gray-600"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Intro Section */}
-      <motion.div
-        className="px-5 space-y-6 lg:w-1/2"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.2, type: "spring" }}
+    <>
+      <section
+        aria-labelledby="contact-heading"
+        className="bg-[#f8fafc] pt-8 pb-16 sm:pt-10 sm:pb-20 lg:pt-12 lg:pb-24"
       >
-        <h1 className="flex text-2xl md:text-4xl">
-          <span>Let&apos;s Work </span>
-          <span className="text-orange-500">&nbsp;Together.</span>
-        </h1>
-        <p className="mt-2 ">
-          Ready to bring your ideas to life? Get in touch, and let&apos;s
-          discuss how I can help you achieve your goals.
-        </p>
-        <div className="flex justify-between text-orange-300">
-          <span className="text-sm italic">Web development</span>
-          <span className="text-sm italic">Data Entry</span>
-          <span className="text-sm italic">Data Analysis</span>
-          <span className="text-sm italic">Data Scrapping</span>
-        </div>
-      </motion.div>
-
-      {/* Contact Form */}
-      <motion.div
-        className="w-full px-5 pb-2 lg:pb-0 lg:w-1/2"
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, delay: 0.4, type: "spring" }}
-      >
-        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          {/* Honeypot */}
-          <input
-            type="text"
-            {...register("honeypot")}
-            style={{ display: "none" }}
-            tabIndex={-1}
-            autoComplete="off"
-          />
-
-          {/* Full Name & Phone */}
-          <div className="flex flex-wrap -mx-2">
-            <div className="w-full px-2 mb-4 md:w-1/2">
-              <label
-                htmlFor="fullName"
-                className="block text-sm font-semibold text-gray-400"
-              >
-                Full Name
-              </label>
-              <input
-                id="fullName"
-                {...register("fullName", {
-                  required: "Full name is required",
-                })}
-                className="w-full px-4 py-2 mt-1 text-gray-800 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Jane Doe"
-              />
-              {errors.fullName && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.fullName.message}
-                </p>
-              )}
-            </div>
-
-            <div className="w-full px-2 mb-4 md:w-1/2">
-              <label
-                htmlFor="phone"
-                className="block text-sm font-semibold text-gray-400"
-              >
-                Phone Number{" "}
-                <span className="font-normal text-gray-400">(optional)</span>
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                {...register("phone", {
-                  pattern: {
-                    value:
-                      /^(\+?\d{1,3}[-.\s]?)?(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}$/,
-                    message: "Invalid phone number",
-                  },
-                })}
-                className="w-full px-4 py-2 mt-1 text-gray-800 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="+233 50 123 4567"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.phone.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Email & Subject */}
-          <div className="flex flex-wrap -mx-2">
-            <div className="w-full px-2 mb-4 md:w-1/2">
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold text-gray-400"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: {
-                    value: /^\S+@\S+$/i,
-                    message: "Invalid email format",
-                  },
-                })}
-                className="w-full px-4 py-2 mt-1 text-gray-800 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="you@example.com"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className="w-full px-2 mb-4 md:w-1/2">
-              <label
-                htmlFor="subject"
-                className="block text-sm font-semibold text-gray-400"
-              >
-                Subject
-              </label>
-              <input
-                id="subject"
-                {...register("subject", { required: "Subject is required" })}
-                className="w-full px-4 py-2 mt-1 text-gray-800 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Let’s talk about..."
-              />
-              {errors.subject && (
-                <p className="mt-1 text-xs text-red-500">
-                  {errors.subject.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Message */}
-          <div>
-            <label
-              htmlFor="message"
-              className="block text-sm font-semibold text-gray-400"
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.19em] text-orange-700">
+              Contact
+            </p>
+            <h1
+              id="contact-heading"
+              className="mt-4 text-[clamp(2.5rem,5vw,4.25rem)] font-semibold leading-[1.12] tracking-[-0.04em] text-slate-900"
             >
-              Message
-            </label>
-            <textarea
-              id="message"
-              rows={5}
-              {...register("message", {
-                required: "Please enter your message",
-              })}
-              className="w-full px-4 py-2 mt-1 text-gray-800 bg-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="Write your message here..."
-            />
-            {errors.message && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.message.message}
-              </p>
-            )}
+              Let&apos;s talk about{" "}
+              <span className="text-orange-600">your website.</span>
+            </h1>
+            <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+              Have a landing page, small business website, or website
+              improvement in mind? Send a few details and we can discuss a
+              focused plan for your project.
+            </p>
           </div>
 
-          {/* Submit Button */}
-          <div>
-            <button
-              type="submit"
-              disabled={sending}
-              className={`w-full py-3 text-white font-semibold rounded transition-all ${
-                sending
-                  ? "bg-red-400 cursor-not-allowed"
-                  : "bg-red-500 hover:bg-red-600"
-              }`}
+          <div className="mt-12 grid items-start gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
+            <aside
+              aria-labelledby="good-fit-heading"
+              className="rounded-2xl border border-slate-200 bg-white p-7 sm:p-8"
             >
-              {sending ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeOpacity="0.25"
-                      strokeWidth="4"
+              <h2
+                id="good-fit-heading"
+                className="text-2xl font-semibold text-slate-900"
+              >
+                Good projects to reach out about
+              </h2>
+              <ul className="mt-6 space-y-4 text-sm leading-7 text-slate-700">
+                {[
+                  "A landing page or simple website",
+                  "A small multi-page business website",
+                  "A mobile-friendly redesign or layout fix",
+                  "A focused React or Next.js UI task",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span
+                      className="mt-2 h-2 w-2 shrink-0 rounded-full bg-orange-600"
+                      aria-hidden="true"
                     />
-                    <path
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Sending...
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8 border-t border-slate-200 pt-7">
+                <h3 className="text-base font-semibold text-slate-900">
+                  What to include
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  A brief description of your goal, any existing website link,
+                  and the changes or pages you need. We can clarify the details
+                  together.
+                </p>
+              </div>
+              <Link
+                href="/portfolio"
+                className="mt-7 inline-flex rounded-sm text-sm font-semibold text-orange-700 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700"
+              >
+                View previous projects{" "}
+                <span className="ml-2" aria-hidden="true">
+                  →
                 </span>
-              ) : (
-                "Send Message"
-              )}
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </section>
-  );
-};
+              </Link>
+            </aside>
 
-export default ContactContent;
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
+                Tell me about your project
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Fields marked * are required.
+              </p>
+
+              <div aria-live="polite" aria-atomic="true" className="mt-5">
+                {status === "success" && (
+                  <div
+                    role="status"
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900"
+                  >
+                    <strong>Thanks for reaching out!</strong> Your message has
+                    been sent successfully. I&apos;ll review your project
+                    details and get back to you by email.
+                  </div>
+                )}
+                {status === "error" && (
+                  <div
+                    role="alert"
+                    className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-900"
+                  >
+                    <strong>Message not sent.</strong> {errorMessage}
+                  </div>
+                )}
+              </div>
+
+              <form
+                ref={formRef}
+                className="mt-6 space-y-5"
+                onSubmit={handleSubmit(onSubmit)}
+                noValidate
+              >
+                {/* Hidden botcheck checkbox supported by Web3Forms. */}
+                <div className="hidden" aria-hidden="true">
+                  <input
+                    type="checkbox"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    {...register("botcheck")}
+                  />
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="fullName" className={labelClass}>
+                      Full name *
+                    </label>
+                    <input
+                      id="fullName"
+                      autoComplete="name"
+                      placeholder="Your name"
+                      className={fieldClass}
+                      aria-invalid={Boolean(errors.fullName)}
+                      aria-describedby={
+                        errors.fullName ? "fullName-error" : undefined
+                      }
+                      {...register("fullName", {
+                        required: "Please enter your name.",
+                      })}
+                    />
+                    {errors.fullName && (
+                      <p
+                        id="fullName-error"
+                        role="alert"
+                        className="mt-2 text-sm text-red-700"
+                      >
+                        {errors.fullName.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className={labelClass}>
+                      Phone{" "}
+                      <span className="font-normal text-slate-500">
+                        (optional)
+                      </span>
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      placeholder="Your phone number"
+                      className={fieldClass}
+                      aria-invalid={Boolean(errors.phone)}
+                      aria-describedby={
+                        errors.phone ? "phone-error" : undefined
+                      }
+                      {...register("phone", {
+                        validate: (value) =>
+                          !value ||
+                          /^[+()\d\s.\-]{7,25}$/.test(value) ||
+                          "Please enter a valid phone number.",
+                      })}
+                    />
+                    {errors.phone && (
+                      <p
+                        id="phone-error"
+                        role="alert"
+                        className="mt-2 text-sm text-red-700"
+                      >
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="email" className={labelClass}>
+                      Email *
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      className={fieldClass}
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={
+                        errors.email ? "email-error" : undefined
+                      }
+                      {...register("email", {
+                        required: "Please enter your email address.",
+                        pattern: {
+                          value: /^\S+@\S+\.\S+$/,
+                          message: "Please enter a valid email address.",
+                        },
+                      })}
+                    />
+                    {errors.email && (
+                      <p
+                        id="email-error"
+                        role="alert"
+                        className="mt-2 text-sm text-red-700"
+                      >
+                        {errors.email.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="subject" className={labelClass}>
+                      Project subject *
+                    </label>
+                    <input
+                      id="subject"
+                      placeholder="e.g. A new landing page"
+                      className={fieldClass}
+                      aria-invalid={Boolean(errors.subject)}
+                      aria-describedby={
+                        errors.subject ? "subject-error" : undefined
+                      }
+                      {...register("subject", {
+                        required: "Please add a short subject.",
+                      })}
+                    />
+                    {errors.subject && (
+                      <p
+                        id="subject-error"
+                        role="alert"
+                        className="mt-2 text-sm text-red-700"
+                      >
+                        {errors.subject.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="message" className={labelClass}>
+                    Project details *
+                  </label>
+                  <textarea
+                    id="message"
+                    rows={6}
+                    placeholder="Tell me what you want to build or improve..."
+                    className={`${fieldClass} resize-y`}
+                    aria-invalid={Boolean(errors.message)}
+                    aria-describedby={
+                      errors.message
+                        ? "message-error message-help"
+                        : "message-help"
+                    }
+                    {...register("message", {
+                      required: "Please describe your project.",
+                    })}
+                  />
+                  <p
+                    id="message-help"
+                    className="mt-2 text-xs leading-5 text-slate-500"
+                  >
+                    A short description is enough to get started.
+                  </p>
+                  {errors.message && (
+                    <p
+                      id="message-error"
+                      role="alert"
+                      className="mt-2 text-sm text-red-700"
+                    >
+                      {errors.message.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <div className="h-captcha" data-captcha="true" />
+
+                  {captchaError && (
+                    <p role="alert" className="mt-2 text-sm text-red-700">
+                      {captchaError}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-orange-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSubmitting ? "Sending your message…" : "Send message"}
+                </button>
+              </form>
+
+              <Script
+                src="https://web3forms.com/client/script.js"
+                strategy="afterInteractive"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

@@ -1,47 +1,31 @@
-import Head from "next/head";
+import { SITE_URL } from "@/lib/site";
+import { createPageMetadata } from "@/lib/seo";
+import AnimatedHome from "@/components/homepage/AnimatedHome";
 
-import AnimatedHero from "@/components/homepage/AnimatedHome";
+export const metadata = createPageMetadata(
+  "Web Developer | Responsive Websites & React",
+  "Daniel Mbedobe designs and develops responsive websites, landing pages, and React interfaces for businesses and organizations. Explore selected web projects.",
+  "/"
+);
 
-const HomePage: React.FC = () => {
+export default function HomePage() {
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Daniel Mbedobe Kunji",
+    url: SITE_URL,
+    image: `${SITE_URL}/assets/pp.webp`,
+    jobTitle: "Web Developer",
+    sameAs: [
+      "https://github.com/Mbedobe",
+      "https://www.linkedin.com/in/danielmbedobe",
+      "https://x.com/@kd_mbedobe",
+    ],
+  };
   return (
     <>
-      <Head>
-        <title>Home | Daniel Mbedobe Kunji</title>
-        <meta
-          name="description"
-          content="Daniel Mbedobe is a skilled frontend developer and data entry and extraction expert..."
-        />
-        <meta
-          name="keywords"
-          content="Daniel Mbedobe Kunji, frontend developer, MERN stack, ..."
-        />
-        <meta name="author" content="Daniel Mbedobe" />
-        <link rel="canonical" href="https://dkmbedobe.onrender.com" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Person",
-              name: "Daniel Mbedobe Kunji",
-              url: "https://dkmbedobe.onrender.com",
-              image: "https://dkmbedobe.onrender.com/pp.webp",
-              jobTitle: "Web Developer & Data Entry Specialist",
-              sameAs: [
-                "https://github.com/Mbedobe",
-                "https://www.linkedin.com/in/danielmbedobe",
-                "https://x.com/@kd_mbedobe",
-              ],
-            }),
-          }}
-        />
-      </Head>
-
-      <AnimatedHero />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
+      <AnimatedHome />
     </>
   );
-};
-
-export default HomePage;
+}

@@ -1,28 +1,12 @@
-import Head from "next/head";
+import { createPageMetadata } from "@/lib/seo";
 import AnimatedAbout from "@/components/aboutpage/AnimatedAbout";
 
-/* ----------‑‑‑  COMPONENT  ‑‑‑---------- */
+export const metadata = createPageMetadata(
+  "About",
+  "Meet Daniel Mbedobe, a web developer creating small business websites, landing pages, and responsive interfaces with React and Next.js.",
+  "/about-daniel-mbedobe"
+);
 
-const About = () => {
-  return (
-    <>
-      <Head>
-        <title>About | Daniel Mbedobe Kunji</title>
-        <meta
-          name="description"
-          content="Learn more about Daniel’s journey in web development, data entry, and the technologies he loves."
-        />
-        <meta
-          name="keywords"
-          content="Daniel Mbedobe, web developer, MERN, React, Tailwind, data entry, Ghana"
-        />
-        <meta name="author" content="Daniel Mbedobe" />
-        <link rel="canonical" href="https://dkmbedobe.onrender.com/about" />
-      </Head>
-
-      <AnimatedAbout />
-    </>
-  );
-};
-
-export default About;
+export default function AboutPage() {
+  return <AnimatedAbout />;
+}
